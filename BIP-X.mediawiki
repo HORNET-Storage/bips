@@ -275,8 +275,8 @@ This is a soft fork. All blocks valid under new rules remain valid under old rul
 
 '''New nodes:'''
 
-* Enforce penalty requirements
-* Reject blocks with cheap non-qualifying transactions
+* Enforce penalty requirements, forcing spam to pay a fee 3.14x higher than basic non-spam
+* Reject blocks containing unqualified transactions that do not pay the required 3.14x penalty
 * Create economic pressure through block orphaning
 
 ===Monitoring===
@@ -290,7 +290,7 @@ Post-activation metrics to track:
 
 ===Game Theory===
 
-'''Nash Equilibrium:''' Once a critical mass of economic nodes enforce penalties, miners must comply or have their blocks orphaned. But unlike outright blockade proposals, miners '''want''' to comply because they earn more.
+'''Nash Equilibrium:''' Once a critical mass of economic nodes enforce penalties, miners must comply or have their blocks orphaned. But unlike outright blockade proposals, miners '''want''' to comply because they may earn more.
 
 ==Examples==
 
