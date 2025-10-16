@@ -163,7 +163,7 @@ The median fee represents genuine market price discovery among legitimate users,
 
 ====The 3.14× (π) Multiplier====
 
-The penalty multiplier was precisely calculated to create '''symmetric punishment''' between attack vectors.
+The penalty multiplier was precisely calculated to create '''symmetric (equal) punishment''' for all types of spam, whether it's inscriptions or something yet to come. It's designed to be future-proof.
 
 '''Attack Vector Analysis:'''
 
