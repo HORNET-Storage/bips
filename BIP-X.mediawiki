@@ -143,9 +143,8 @@ A unique property emerges from calculating the median over qualifying transactio
 
 '''Reverse attack:''' Attacker floods network with cheap qualifying transactions to lower median
 * Transactions below median don't lower it (by definition of median)
-* Attacker must sustain >50% of all qualifying volume
-* During attack, legitimate users pay less (lower median benefits them)
-* When attack stops, median returns to market equilibrium
+* Attacker must sustain >50% of all qualifying volume, making it more costly than paying for the spam tax directly
+* Leveraging unforgeable costliness mitigates both economic attack vectors.
 
 This creates an antifragile system where attacks strengthen the defense. Users cannot make qualifying transactions more expensive for other users - they can only make spam more expensive for spammers.
 
