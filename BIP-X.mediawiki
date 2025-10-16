@@ -22,7 +22,7 @@ Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying tr
 
 Bitcoin's transaction structure has evolved through two major upgrades that inadvertently expanded the attack surface for arbitrary data storage:
 
-'''2017 - SegWit:''' Segregated Witness moved signature data into a separate ''witness'' structure with a 75% fee discount. Each input gets its own witness bucket in every transaction, meaning a single transaction can contain many witness data buckets. While solving transaction malleability and enabling Lightning, SegWit created per-input witness data buckets that attackers could use to embed data across multiple inputs, benefiting from the discount meant for SegWit.
+'''2017 - SegWit:''' Segregated Witness moved signature data into a separate ''witness'' structure with a 75% fee discount. Each input gets its own witness bucket in every transaction, meaning a single transaction can contain many witness data buckets. While solving transaction malleability and enabling Lightning, SegWit created per-input witness data buckets that attackers could use to embed data across multiple inputs, benefiting from the increase in storage area per transaction and from the discount meant for SegWit.
 
 '''2021 - Taproot:''' Taproot introduced tapscript trees where each P2TR output could commit to multiple spending paths. Each output gets its own taproot tree and taproot scripts/leaves. Attackers exploited this by embedding massive data payloads in witness-revealed tapscript leaves, creating "inscriptions" - arbitrary files stored permanently on-chain.
 
