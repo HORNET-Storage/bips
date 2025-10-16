@@ -101,9 +101,9 @@ Rationale: Limiting the OP_RETURN area to a single hash with a single hash-prefi
 
 The penalty system creates a two-tier fee market where qualifying transactions pay market rates while non-qualifying transactions must pay a multiple of those rates. This mechanism operates through three components:
 
-'''1. Rolling Window Calculation:''' Every node maintains a 2016-block rolling window (approximately 2 weeks) of all qualifying transaction fees. This matches Bitcoin's difficulty adjustment period - Satoshi's choice balanced responsiveness with stability, avoiding both stale data (too long) and volatility (too short).
+'''1. Rolling Window Calculation:''' Every node maintains a 2016-block rolling window (approximately 2 weeks) of all qualifying transaction fees. This is similar to Bitcoin's difficulty adjustment period but is a rolling window instead - Satoshi's choice of two weeks balanced adaptability with stability, avoiding both stale data (too old) and volatility (too new) in his pursuit for homeostasis.
 
-'''2. Median Determination:''' From this window, nodes calculate the median fee rate of qualifying transactions. The median (50th percentile) is used rather than mean because it cannot be skewed by outliers - a few extremely high or low fee transactions cannot manipulate the baseline.
+'''2. Median Determination:''' From this rolling window, nodes calculate the median fee rate of qualifying transactions. The "median" is used rather than the "mean" because it cannot be skewed by outliers - a few extremely high or low fee transactions cannot manipulate the baseline median as easily a mean.
 
 '''3. Penalty Application:''' Non-qualifying transactions must pay at least 3.14× this median rate or the block containing them is rejected.
 
