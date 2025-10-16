@@ -30,8 +30,8 @@ Bitcoin's transaction structure has evolved through two major upgrades that inad
 
 Since late 2022, the Bitcoin network has been flooded with inscription transactions storing images, videos, and other non-monetary data directly in the blockchain. This abuse manifests in two patterns:
 
-# '''Single-transaction inscriptions:''' Multi-megabyte files embedded in one transaction's witness
-# '''Fragmented inscriptions:''' Data split across thousands of small transactions
+# '''Single-transaction inscriptions:'''  Full files embedded in one transaction's witness
+# '''Fragmented inscriptions:''' Bits of file data spread across many small transactions
 
 Both attack vectors harm Bitcoin by creating:
 * '''UTXO bloat:''' Inscriptions, or fragmentation via other spam methods, create thousands of outputs that must be tracked indefinitely
