@@ -93,7 +93,7 @@ This is calculated by summing all witness vectors including CompactSize prefixes
 
 OP_RETURN outputs must have value = 0 (provably unspendable).
 
-Rationale: Limiting the OP_RETURN area to 1 hash and 1 hash prefix is the goal. 32 bytes for 1 hash with 4 bytes for CID v1 prefixes, in case Merkle Root pointers to off-chain data are stored in the OP_RETURN/ScriptPubKey area.
+Rationale: Limiting the OP_RETURN area to a single hash with a single hash-prefix is the rule. 32 bytes for one hash and 4 bytes for the CID v1 hash-prefixes, in case Merkle Root pointers to off-chain data are stored in the OP_RETURN/ScriptPubKey area.
 
 ==Penalty Mechanism==
 
