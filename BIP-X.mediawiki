@@ -1,0 +1,354 @@
+<pre>
+  BIP: X
+  Layer: Consensus (soft fork)
+  Title: Transaction Weight Limits for Spam Prevention
+  Author: Colby Serpa <npub1t89vhkp66hz54kga4n635jwqdc977uc2crnuyddx7maznwfrpupqwra5h9>, Daisugi
+  Status: Draft
+  Type: Standards Track
+  Created: 2025-10-16
+  License: MIT
+  Activation: User-Activated Soft Fork (UASF)
+</pre>
+
+==Abstract==
+
+This BIP proposes minimal transaction constraints to protect Bitcoin's UTXO set from arbitrary data storage while preserving Lightning Network functionality. By limiting witness data to 300 bytes, taproot trees to 2 leaves, outputs to 6, and scriptPubKey size to 36 bytes, we eliminate economically viable paths for inscription-based spam.
+
+Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying transactions, creating symmetric economic punishment for all types of spam. This penalty approach incentivizes miner adoption through increased fee revenue, unlike outright transaction blockade which creates misaligned incentives. For the first time ever, a transaction discount is achieved at the consensus level without a block size/weight increase.
+
+==Motivation==
+
+===The Evolution of Bitcoin's Attack Surface===
+
+Bitcoin's transaction structure has evolved through two major upgrades that inadvertently expanded the attack surface for arbitrary data storage:
+
+'''2017 - SegWit:''' Segregated Witness moved signature data into a separate ''witness'' structure with a 75% fee discount. Each input gets its own witness bucket in every transaction, meaning a single transaction can have many witness data buckets. While solving transaction malleability and enabling Lightning, it created per-input witness data buckets where attackers could embed data across multiple inputs, benefiting from the discount.
+
+'''2021 - Taproot:''' Taproot introduced tapscript trees where each P2TR output could commit to multiple spending paths. Each output gets its own taproot tree and taproot scripts/leaves. Attackers exploited this by embedding massive data payloads in witness-revealed tapscript leaves, creating "inscriptions" - arbitrary files stored permanently on-chain.
+
+===The Inscription Crisis (2023-Present)===
+
+Since late 2022, the Bitcoin network has been flooded with inscription transactions storing images, videos, and other non-monetary data directly in the blockchain. This abuse manifests in two patterns:
+
+# '''Single-transaction inscriptions:''' Multi-megabyte files embedded in one transaction's witness
+# '''Fragmented inscriptions:''' Data split across thousands of small transactions
+
+Both attack vectors harm Bitcoin by creating:
+* '''UTXO bloat:''' Inscriptions, or fragmentation via other spam methods, create thousands of outputs that must be tracked indefinitely
+* '''Legal liability:''' Illegal content embedded on-chain creates risks for node operators globally  
+* '''Blockchain bloat:''' Permanent storage of arbitrary data crowds out monetary transactions
+* '''Fee market distortion:''' Spam transactions price out legitimate economic activity
+
+===Why Economic Penalties Beat Outright Blockade===
+
+Previous proposals have suggested blocking non-standard transactions entirely. This approach fails because:
+# '''Misaligned incentives:''' Miners lose fee revenue by rejecting transactions
+# '''Difficult enforcement:''' Requires widespread miner cooperation
+
+This proposal instead makes spam ''economically irrational'' while preserving miner revenue. Spam transactions remain valid but must pay a penalty 3.14x more than simple transactions. Miners are incentivized to enforce these rules because they earn ''higher'' fees from penalized transactions, and because they may be legally incentivized to avoid these penalized transaction types depending on their legal jurisdiction.
+
+==Qualifying Transaction Constraints==
+
+A transaction qualifies for normal fee rates if '''ALL''' of the following constraints are met:
+
+===1. Witness Size Limit (SegWit Protection)===
+
+'''Background:''' SegWit (BIP141, 2017) introduced witness data with a 75% fee discount. Each input has its own witness vector, allowing attackers to spread inscription data across multiple inputs while benefiting from the discount.
+
+'''Constraint:''' Total witness size across all inputs ≤ '''300 bytes'''
+
+This is calculated by summing all witness vectors including CompactSize prefixes. Inputs are unlimited to preserve UTXO consolidation incentives, but they share one small witness budget.
+
+'''Rationale:''' Lightning Network HTLCs require up to 278 bytes for their largest witness (offered HTLC success path with two signatures). The 300-byte limit provides 22 bytes of safety margin while making inscriptions economically unviable.
+
+===2. Taproot Tree Depth (Taproot Protection)===
+
+'''Background:''' Taproot (BIP341, 2021) allows P2TR outputs to commit to script trees. When spending via script path, one tapscript leaf is revealed in the witness. Inscriptions exploit this by embedding massive data payloads in leaves.
+
+'''Constraint:''' Maximum tree depth ≤ '''1''' (allows up to 2 script leaves)
+
+* Depth 0: Single leaf with 33-byte control block
+* Depth 1: Two leaves with 65-byte control block (33 base + 32 merkle proof)
+
+'''Rationale:''' Lightning HTLCs require exactly 2 script leaves (success path and timeout path). The revocation path uses the taproot internal key (key-path spending), not a script leaf. This constraint preserves Lightning while preventing deep trees used for data storage.
+
+===3. Output Count (Batching Limit)===
+
+'''Background:''' Outputs define payment destinations. While batching improves efficiency, unlimited outputs enable spam patterns.
+
+'''Constraint:''' Maximum '''6 outputs''' per transaction
+
+'''Rationale:''' Lightning commitment transactions require 4 outputs minimum (2 balances + 2 anchors) plus 2 HTLC outputs for bidirectional payments. This also allows basic exchange batching (5 recipients + 1 change).
+
+===4. ScriptPubKey Size (Output Limit)===
+
+'''Background:''' Each output contains a scriptPubKey defining spending conditions. This is the only variable-size portion besides witness data.
+
+'''Constraint:''' Each output's scriptPubKey ≤ '''36 bytes'''
+
+'''Implications:'''
+* P2TR (Taproot): 34 bytes ✓
+* P2WPKH (Native SegWit): 22 bytes ✓  
+* OP_RETURN: Limited to 34 bytes of data payload ✓
+
+OP_RETURN outputs must have value = 0 (provably unspendable).
+
+Rationale: Limiting the OP_RETURN area to 1 hash and 1 hash prefix is the goal. 32 bytes for 1 hash with 4 bytes for CID v1 prefixes, in case Merkle Root pointers to off-chain data are stored in the OP_RETURN/ScriptPubKey area.
+
+==Penalty Mechanism==
+
+===How the Median Fee Mechanism Works===
+
+The penalty system creates a two-tier fee market where qualifying transactions pay market rates while non-qualifying transactions must pay a multiple of those rates. This mechanism operates through three components:
+
+'''1. Rolling Window Calculation:''' Every node maintains a 2016-block rolling window (approximately 2 weeks) of all qualifying transaction fees. This matches Bitcoin's difficulty adjustment period - Satoshi's choice balanced responsiveness with stability, avoiding both stale data (too long) and volatility (too short).
+
+'''2. Median Determination:''' From this window, nodes calculate the median fee rate of qualifying transactions. The median (50th percentile) is used rather than mean because it cannot be skewed by outliers - a few extremely high or low fee transactions cannot manipulate the baseline.
+
+'''3. Penalty Application:''' Non-qualifying transactions must pay at least 3.14× this median rate or the block containing them is rejected.
+
+<pre>
+For each block at height H:
+1. Collect all qualifying transactions from blocks [H-2016, H-1]
+2. Calculate MEDIAN_FEE = median(qualifying_fee_rates)
+3. Required fee for non-qualifying tx ≥ MEDIAN_FEE × 3.14
+4. Reject blocks violating this rule
+</pre>
+
+===Key Innovation #1: Discount Without Block Size Increase===
+
+Traditional discount mechanisms require expanding block capacity:
+* '''SegWit (2017):''' Created 4MB block weight to provide 75% witness discount
+* '''OP_RETURN2 proposals:''' Adam Back suggested 8MB blocks to gain the data carrier discount
+* '''Problem:''' Larger blocks increase node requirements and centralization pressure, hence why Bitcoin Cash was rejected
+
+This proposal achieves the inverse - a '''discount for qualifying transactions without any block size increase'''. By penalizing non-qualifying transactions rather than discounting qualifying ones, we achieve the same relative price difference through pure economic means:
+
+* Block capacity: Unchanged at 4MB weight
+* Qualifying transactions: Pay market rate (effective discount)
+* Non-qualifying transactions: Pay 3.14× penalty
+* Result: 68% relative discount for qualifying vs non-qualifying, no capacity change
+
+This is the first mechanism to create transaction class differentiation without modifying consensus block limits.
+
+===Key Innovation #2: Flood-resistance for Discounted Transactions===
+
+A unique property emerges from calculating the median over qualifying transactions only:
+
+'''Attack scenario:''' Attacker floods network with high-fee qualifying transactions to raise the median
+* Attacker must create qualifying transactions (limited to 504 bytes of data each)
+* These transactions must pay above-median fees to influence the calculation
+* As median rises, penalty for non-qualifying transactions increases proportionally
+* Result: Attack makes spam '''more expensive''', not less
+
+'''Reverse attack:''' Attacker floods network with cheap qualifying transactions to lower median
+* Transactions below median don't lower it (by definition of median)
+* Attacker must sustain >50% of all qualifying volume
+* During attack, legitimate users pay less (lower median benefits them)
+* When attack stops, median returns to market equilibrium
+
+This creates an antifragile system where attacks strengthen the defense. Users cannot make qualifying transactions more expensive for other users - they can only make spam more expensive for spammers.
+
+===Mathematical Precision===
+
+The 2016-block period provides optimal balance:
+* '''Statistical significance:''' ~300,000+ qualifying transactions (assuming ~150 per block)
+* '''Manipulation resistance:''' Requires sustaining attack for 2 weeks
+* '''Market responsiveness:''' Adjusts to fee conditions every fortnight
+* '''Calculation efficiency:''' Single median computation per block
+
+The median fee represents genuine market price discovery among legitimate users, while the penalty ensures spam always costs more than legitimate use regardless of market manipulation attempts.
+
+====The 3.14× (π) Multiplier====
+
+The penalty multiplier was precisely calculated to create '''symmetric punishment''' between attack vectors.
+
+'''Attack Vector Analysis:'''
+
+With our constraints, storing 1MB of data requires either:
+
+# '''Single inscription:''' One transaction with 1MB in witness
+#* Transaction size: ~262,264 vbytes  
+#* Cost at market rate R: 262,264 × R sats
+
+# '''Fragmented storage:''' Split across many constrained transactions
+#* Data per transaction: 300 (witness) + 204 (6×34 OP_RETURN) = 504 bytes
+#* Transactions needed: 2,081 for 1MB
+#* Transaction size: ~396.5 vbytes each
+#* Total size: 2,081 × 396.5 = ~825,116 vbytes
+#* Cost at market rate R: 825,116 × R sats
+
+'''Symmetric Punishment Calculation:'''
+
+For equal economic discouragement:
+<pre>
+Single inscription with penalty = Fragmented storage at market rate
+262,264 × R × P = 825,116 × R
+P = 825,116 / 262,264
+P = 3.146 (rounded to 3.14 for memorability and mathematical elegance)
+</pre>
+
+At P = 3.14×:
+* Single inscription: Pays 3.14× market rate
+* Fragmentation: Costs 3.14× as much total as single inscription  
+* Both attacks equally discouraged
+
+The choice of π (3.14159...) as the multiplier is both mathematically elegant and precisely calibrated.
+
+==Penalty Rationale==
+
+===Why Penalties Instead of Outright Blockade===
+
+'''Luke Dashjr's Approach:'''
+* Blocks non-standard transactions entirely
+* Requires miner adoption with no economic incentive
+* Miners lose fees by rejecting transactions
+* Creates adversarial relationship with miners
+* Higher risk of chain split due to miner defection
+
+'''This Proposal (Economic Penalties):'''
+* Non-qualifying transactions remain valid but expensive
+* Miners earn '''MORE''' from penalized transactions (3.14× fees)
+* Creates aligned incentives - miners profit from enforcement
+* Market dynamics determine spam viability
+* Gradual economic pressure rather than hard cutoffs
+
+The penalty approach is superior because it harnesses profit motive rather than fighting it.
+
+===Why These Specific Constraints===
+
+====300-Byte Witness Limit====
+* '''Minimum for Lightning:''' 278 bytes (offered HTLC success)
+* '''Safety margin:''' 22 bytes
+* '''Spam impact:''' Makes inscriptions require ~2,000 transactions per MB
+
+====2-Leaf Taproot Trees====
+* '''Lightning requirement:''' Exactly 2 leaves (success + timeout paths)
+* '''Key insight:''' Revocation uses key-path, not a script leaf
+* '''No over-restriction:''' Deeper trees unnecessary for legitimate use
+
+====6 Output Maximum====
+* '''Lightning minimum:''' 4 outputs (balances + anchors) + 2 HTLCs
+* '''Enables:''' Bidirectional routing, basic batching
+* '''Prevents:''' Industrial batching, massive CoinJoins
+
+====36-Byte ScriptPubKey====
+* '''Accommodates:''' All standard output types
+* '''OP_RETURN:''' 34-byte payload (32-byte hash + 2-byte prefix)
+* '''Tightest possible:''' P2TR needs 34 bytes, leaving only 2-byte margin
+
+==Activation==
+
+This proposal uses a '''User-Activated Soft Fork (UASF)''' following the precedent of BIP148.
+
+===Activation Philosophy===
+
+* '''Users define consensus:''' Economic nodes, not miners, determine valid blocks
+* '''Miners provide proof-of-work:''' For chains that comply with user rules  
+* '''No permission needed:''' Users activate directly without miner signaling
+
+===Activation Parameters===
+
+* '''Flag Day:''' Block height TBD (few months after implementation release)
+* '''No miner signaling:''' Direct activation at predetermined height
+* '''Enforcement:''' Mandatory for participating nodes at activation height
+
+===Why UASF Is Appropriate===
+
+# '''Miners benefit financially:''' They earn 3.14× fees from spam transactions
+# '''No lost revenue:''' Unlike outright blockade, penalties increase miner income
+# '''Users protect their network:''' Users running this node will force spammers to pay more fees
+# '''Proven mechanism:''' BIP148 demonstrated UASF effectiveness
+
+===Backwards Compatibility===
+
+This is a soft fork. All blocks valid under new rules remain valid under old rules.
+
+'''Old nodes:'''
+* Accept all transactions (no penalty awareness)
+* See all blocks as valid
+* Continue normal operation
+
+'''New nodes:'''
+* Enforce penalty requirements
+* Reject blocks with cheap non-qualifying transactions
+* Create economic pressure through block orphaning
+
+===Monitoring===
+
+Post-activation metrics to track:
+* Percentage of qualifying vs non-qualifying transactions
+* Median fee evolution
+* Inscription transaction volume
+* UTXO set growth rate
+* Lightning Network impacts
+
+===Game Theory===
+
+'''Nash Equilibrium:''' Once a critical mass of economic nodes enforce penalties, miners must comply or have their blocks orphaned. But unlike outright blockade proposals, miners '''want''' to comply because they earn more.
+
+==Examples==
+
+===Qualifying Transactions===
+
+<pre>
+# Lightning HTLC settlement (qualifies)
+Witness: 278 bytes (maximum Lightning requirement)
+Outputs: 4 (to_local, to_remote, anchor_local, anchor_remote)
+ScriptPubKeys: All ≤34 bytes (P2TR)
+Result: Qualifies, pays market rate
+
+# Simple payment (qualifies)
+Witness: 107 bytes (single signature + pubkey)
+Outputs: 2 (payment + change)
+ScriptPubKeys: 34 bytes each (P2TR)
+Result: Qualifies, pays market rate
+
+# 5-recipient batch payment (qualifies)
+Witness: 107 bytes
+Outputs: 6 (5 payments + 1 change)
+ScriptPubKeys: All ≤34 bytes
+Result: Qualifies, pays market rate
+</pre>
+
+===Non-Qualifying Transactions===
+
+<pre>
+# Inscription attempt
+Witness: 10,000 bytes (image data)
+Outputs: 1
+ScriptPubKeys: 34 bytes
+Result: Non-qualifying, must pay 3.14× median fee
+
+# Excessive outputs
+Witness: 100 bytes
+Outputs: 7
+ScriptPubKeys: All 22 bytes (P2WPKH)
+Result: Non-qualifying, must pay 3.14× median fee
+
+# Deep taproot tree
+Witness: 200 bytes
+Outputs: 2
+Taproot tree depth: 5
+Result: Non-qualifying, must pay 3.14× median fee
+</pre>
+
+==Acknowledgments==
+
+* Satoshi Nakamoto for creating Bitcoin with a clear monetary purpose
+* The SegWit developers for enabling Lightning Network
+* The Bitcoin Core developers for maintaining reference implementation
+* The Lightning Network developers for defining minimum viable constraints
+* The UASF community for proving user sovereignty
+
+==References==
+
+* [https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki BIP 141: Segregated Witness]
+* [https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki BIP 341: Taproot]
+* [https://github.com/bitcoin/bips/blob/master/bip-0148.mediawiki BIP 148: UASF SegWit]
+* [https://github.com/lightning/bolts Lightning Network BOLTs]
+* [https://github.com/ordinals/ord Ordinal Theory Documentation]
+
+==Copyright==
+
+This document is licensed under the MIT License.
