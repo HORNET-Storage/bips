@@ -1,7 +1,7 @@
 <pre>
   BIP: X
   Layer: Consensus (soft fork)
-  Title: Transaction Weight Limits for Spam Prevention
+  Title: Discounting Normal Transactions without a Block Size Increase via Median Fees and Constrained Data Bucket Sizes
   Author: Colby Serpa <npub1t89vhkp66hz54kga4n635jwqdc977uc2crnuyddx7maznwfrpupqwra5h9>, Daisugi
   Status: Draft
   Type: Standards Track
