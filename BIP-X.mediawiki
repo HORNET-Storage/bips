@@ -201,7 +201,7 @@ The choice of π (3.14159...) as the multiplier is both mathematically elegant a
 
 ===Why Penalties Instead of Outright Blockade===
 
-'''Luke Dashjr's Approach:'''
+'''Luke Dashjr's Fork:'''
 * Blocks non-standard transactions entirely
 * Requires miner adoption with no economic incentive
 * Miners lose fees by rejecting transactions
