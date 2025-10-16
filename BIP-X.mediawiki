@@ -78,7 +78,7 @@ This is calculated by summing all witness vectors including CompactSize prefixes
 
 '''Constraint:''' Maximum '''6 outputs''' per transaction
 
-'''Rationale:''' Lightning commitment transactions require 4 outputs minimum (2 balances + 2 anchors) plus 2 HTLC outputs for bidirectional payments. This also allows basic exchange batching (5 recipients + 1 change).
+'''Rationale:''' Lightning commitment transactions with anchors for fee bumping require 6 outputs minimum (2 balances + 2 anchors + 2 HTLC outputs) for secure bidirectional payments. Transactions with this limited number of six outputs will qualify and may reduce fees for users/exchanges sending coins to five or less recipients at once (5 addresses + 1 change address).
 
 ===4. ScriptPubKey Size (Output Limit)===
 
