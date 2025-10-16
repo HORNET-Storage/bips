@@ -230,9 +230,10 @@ The penalty approach is superior because it harnesses profit motive rather than 
 * '''No over-restriction:''' Deeper trees unnecessary for legitimate use
 
 ====6 Output Maximum====
-* '''Lightning minimum:''' 4 outputs (balances + anchors) + 2 HTLCs
+* '''Modern Lightning minimum:''' 2 outputs for balances + 2 outputs for anchors to enable fee bumping + 2 HTLCs
+* '''Anchors:''' Luke Dashjr is currently blocking anchors in Knots. Anchors enable Lightning channel participants to fee bump their on-chain transactions for managing the channel when their original transaction isn't being processed. RBF cannot be used for this due to the two parties locked in the contract, therefore Anchors were invented. Anchors are worth preserving.
 * '''Enables:''' Bidirectional routing, basic batching
-* '''Prevents:''' Industrial batching, massive CoinJoins
+
 
 ====36-Byte ScriptPubKey====
 * '''Accommodates:''' All standard output types
