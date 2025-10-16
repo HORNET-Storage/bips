@@ -59,7 +59,7 @@ A transaction qualifies for normal fee rates if '''ALL''' of the following const
 
 This is calculated by summing all witness vectors including CompactSize prefixes. Inputs are unlimited to preserve UTXO consolidation incentives, but they share one small witness budget.
 
-'''Rationale:''' Lightning Network HTLCs require up to 278 bytes for their largest witness (offered HTLC success path with two signatures). The 300-byte limit provides 22 bytes of safety margin while making inscriptions economically unviable.
+'''Rationale:''' Lightning Network HTLCs require up to 278 bytes for their largest witness (offered HTLC success path with two signatures). The 300-byte limit provides 22 bytes of safety margin while making inscriptions economically disincentivized.
 
 ===2. Taproot Tree Depth (Taproot Protection)===
 
