@@ -268,11 +268,13 @@ This proposal uses a '''User-Activated Soft Fork (UASF)''' following the precede
 This is a soft fork. All blocks valid under new rules remain valid under old rules.
 
 '''Old nodes:'''
+
 * Accept all transactions (no penalty awareness)
 * See all blocks as valid
 * Continue normal operation
 
 '''New nodes:'''
+
 * Enforce penalty requirements
 * Reject blocks with cheap non-qualifying transactions
 * Create economic pressure through block orphaning
