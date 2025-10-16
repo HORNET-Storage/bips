@@ -12,9 +12,9 @@
 
 ==Abstract==
 
-This BIP proposes safer data bucket size constraints in transactions in order to minimize arbitrary data storage on Bitcoin, while preserving basic Lightning Network functionality. By limiting witness data to 300 bytes, taproot trees to 2 leaves, outputs to 6, and scriptPubKey size to 36 bytes, we make all the viable paths for spam more expensive.
+This BIP proposes safer data bucket size constraints in bitcoin transactions in order to minimize arbitrary data storage on-chain, while preserving basic Lightning Network functionality. By limiting witness data to 300 bytes, taproot trees to 2 leaves, outputs to 6, and scriptPubKey size to 36 bytes, we make all the viable paths for spam more expensive.
 
-Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying transactions, creating symmetric economic punishment for all types of spam.  For the first time ever, a transaction discount is achieved at the consensus level without a block size/weight increase.
+Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying transactions, creating equal economic punishment for all types of spam.  For the first time ever, a transaction discount is achieved at the consensus level without a block size/weight increase.
 
 ==Motivation==
 
@@ -22,7 +22,7 @@ Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying tr
 
 Bitcoin's transaction structure has evolved through two major upgrades that inadvertently expanded the attack surface for arbitrary data storage:
 
-'''2017 - SegWit:''' Segregated Witness moved signature data into a separate ''witness'' structure with a 75% fee discount. Each input gets its own witness bucket in every transaction, meaning a single transaction can have many witness data buckets. While solving transaction malleability and enabling Lightning, it created per-input witness data buckets where attackers could embed data across multiple inputs, benefiting from the discount.
+'''2017 - SegWit:''' Segregated Witness moved signature data into a separate ''witness'' structure with a 75% fee discount. Each input gets its own witness bucket in every transaction, meaning a single transaction can contain many witness data buckets. While solving transaction malleability and enabling Lightning, SegWit created per-input witness data buckets that attackers could use to embed data across multiple inputs, benefiting from the discount meant for SegWit.
 
 '''2021 - Taproot:''' Taproot introduced tapscript trees where each P2TR output could commit to multiple spending paths. Each output gets its own taproot tree and taproot scripts/leaves. Attackers exploited this by embedding massive data payloads in witness-revealed tapscript leaves, creating "inscriptions" - arbitrary files stored permanently on-chain.
 
