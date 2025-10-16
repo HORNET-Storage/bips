@@ -142,7 +142,7 @@ A unique property emerges from calculating the median over qualifying transactio
 * Result: Attack makes spam '''more expensive''', not less
 
 '''Reverse attack:''' Attacker floods network with cheap qualifying transactions to lower median
-* Creating many spam transactions with low fees to lower the median would be very expensive
+* Creating many simple transactions with low fees to lower the median would be very expensive to sustain for weeks
 * Attacker must sustain >50% of all qualifying transaction volume, making it more costly than paying for the spam tax directly
 * Attacker must gain 51%+ of hash power if they do not sustain >50% of all qualifying transaction volume, so the miner can only choose transactions with low fees. This would also make the 51% attack even more costly than usual.
 * Leveraging unforgeable costliness mitigates both economic attack vectors.
