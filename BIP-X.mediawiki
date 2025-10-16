@@ -12,7 +12,7 @@
 
 ==Abstract==
 
-This BIP proposes minimal transaction constraints to protect Bitcoin's UTXO set from arbitrary data storage while preserving Lightning Network functionality. By limiting witness data to 300 bytes, taproot trees to 2 leaves, outputs to 6, and scriptPubKey size to 36 bytes, we make all the viable paths for spam more expensive.
+This BIP proposes safer data bucket size constraints in transactions in order to minimize arbitrary data storage on Bitcoin, while preserving basic Lightning Network functionality. By limiting witness data to 300 bytes, taproot trees to 2 leaves, outputs to 6, and scriptPubKey size to 36 bytes, we make all the viable paths for spam more expensive.
 
 Non-qualifying transactions pay 3.14× (π) the median fee rate of qualifying transactions, creating symmetric economic punishment for all types of spam.  For the first time ever, a transaction discount is achieved at the consensus level without a block size/weight increase.
 
